@@ -1,5 +1,5 @@
 #!/bin/bash
-###########This script add SSL configuration to Nginx
+###########This script adds SSL configuration to Nginx
 
 ### default values
 ssl_directory="/etc/nginx/ssl"
