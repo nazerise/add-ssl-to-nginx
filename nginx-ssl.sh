@@ -52,12 +52,14 @@ copy_cert() {
 }
 
 nginx_config_ssl() {
+	openssl dhparam -out /etc/nginx/dhparam.pem 2048
 #####find "http {" in nginx.conf
 	http_line=$(cat  $nginx_directory/nginx.conf |grep -now  'http \+{' | awk -F ':' '{print $1}')
 	insert_ssl_line=$(expr $http_line + 1)
 	sed -ie ""$http_line"G" $nginx_directory/nginx.conf
 
 sed -i ''"$http_line"' r /dev/stdin' $nginx_directory/nginx.conf  <<EOT
+	ssl_dhparam /etc/nginx/dhparam.pem;
 	ssl_session_timeout  10m;
 	ssl_session_cache    shared:SSL:50m;
 	ssl_session_tickets  off;
