@@ -7,6 +7,7 @@ temp_ssl_directory="/root/ssl"
 temp_cert="cert.pem"
 temp_privkey="privkey.pem"
 nginx_directory="/etc/nginx"
+vhost_directory="/etc/nginx/conf.d"
 ########
 
 copy_cert() {
@@ -52,11 +53,11 @@ copy_cert() {
 
 nginx_config_ssl() {
 #####find "http {" in nginx.conf
-	http_line=$(cat  /etc/nginx/nginx.conf |grep -now  'http \+{' | awk -F ':' '{print $1}')
+	http_line=$(cat  $nginx_directory/nginx.conf |grep -now  'http \+{' | awk -F ':' '{print $1}')
 	insert_ssl_line=$(expr $http_line + 1)
-	sed -ie ""$http_line"G" /etc/nginx/nginx.conf
+	sed -ie ""$http_line"G" $nginx_directory/nginx.conf
 
-sed -i ''"$http_line"' r /dev/stdin' /etc/nginx/nginx.conf  <<EOT
+sed -i ''"$http_line"' r /dev/stdin' $nginx_directory/nginx.conf  <<EOT
 	ssl_session_timeout  10m;
 	ssl_session_cache    shared:SSL:50m;
 	ssl_session_tickets  off;
@@ -86,13 +87,13 @@ nginx_config_servername() {
         fi
 
 ####### find right server_name without # and test in /etc/nginx/conf.d
-	cat $nginx_directory/conf.d/*.conf | grep -nw  'server_name' | egrep -v "test|#" > /dev/null 2>&1
+	cat $vhost_directory/*.conf | grep -nw  'server_name' | egrep -v "test|#" > /dev/null 2>&1
 	if [ "$?" == "0" ];then
 #                echo -e "\033[0;32mFind server_name in conf.d\033[0m"
-		ls  /etc/nginx/conf.d | grep .conf$ > /tmp/vhost.txt
+		ls  $vhost_directory | grep .conf$ > /tmp/vhost.txt
 		while IFS= read -r vhost
 	        do
-			file=$nginx_directory/conf.d/$vhost
+			file=$vhost_directory/$vhost
                 	echo -e "\033[0;32mFind server_name in $file\033[0m"
 			nginx_config_https $file
 		done</tmp/vhost.txt
@@ -120,7 +121,7 @@ find_empty_line() {
         done
 }
 
-find_http_condition() {
+find_http_listen_condition() {
 	line_1=$1
 	line_2=$1
 	find="n"
@@ -163,7 +164,7 @@ nginx_config_https() {
 		empty_line=$line
 
 ############find listen port 80 line in nginx config file
-		find_http_condition $empty_line $1
+		find_http__listen_condition $empty_line $1
 
 ############check if certificate match with server_name
 	        echo $server_name_value | egrep -wv ".*\..$cert_CNi;" > /dev/null 2>&1
